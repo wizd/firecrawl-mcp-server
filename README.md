@@ -194,6 +194,10 @@ Optionally, you can add it to a file called `.vscode/mcp.json` in your workspace
 - `FIRECRAWL_CREDIT_WARNING_THRESHOLD`: Credit usage warning threshold (default: 1000)
 - `FIRECRAWL_CREDIT_CRITICAL_THRESHOLD`: Credit usage critical threshold (default: 100)
 
+##### TLS Configuration
+
+- `FIRECRAWL_SKIP_TLS_VERIFICATION`: Skip TLS certificate verification for all scrape operations (default: false). Set to 'true' to bypass self-signed certificate errors.
+
 ### Configuration Examples
 
 For cloud API usage with custom retry and credit monitoring:
@@ -211,6 +215,9 @@ export FIRECRAWL_RETRY_BACKOFF_FACTOR=3      # More aggressive backoff
 # Optional credit monitoring
 export FIRECRAWL_CREDIT_WARNING_THRESHOLD=2000    # Warning at 2000 credits
 export FIRECRAWL_CREDIT_CRITICAL_THRESHOLD=500    # Critical at 500 credits
+
+# Optional TLS configuration
+export FIRECRAWL_SKIP_TLS_VERIFICATION=true      # Skip TLS verification to handle self-signed certificates
 ```
 
 For self-hosted instance:
@@ -246,7 +253,9 @@ Add this to your `claude_desktop_config.json`:
         "FIRECRAWL_RETRY_BACKOFF_FACTOR": "3",
 
         "FIRECRAWL_CREDIT_WARNING_THRESHOLD": "2000",
-        "FIRECRAWL_CREDIT_CRITICAL_THRESHOLD": "500"
+        "FIRECRAWL_CREDIT_CRITICAL_THRESHOLD": "500",
+
+        "FIRECRAWL_SKIP_TLS_VERIFICATION": "true"
       }
     }
   }
@@ -269,6 +278,9 @@ const CONFIG = {
     warningThreshold: 1000, // Warn when credit usage reaches this level
     criticalThreshold: 100, // Critical alert when credit usage reaches this level
   },
+  scrape: {
+    skipTlsVerification: false, // Skip TLS certificate verification (default: false)
+  },
 };
 ```
 
@@ -290,6 +302,11 @@ These configurations control:
    - Example: With default settings:
      - Warning at 1000 credits remaining
      - Critical alert at 100 credits remaining
+
+3. **TLS Configuration**
+   - Controls whether to skip TLS certificate verification
+   - Useful for handling self-signed certificates in development environments
+   - When enabled, bypasses SSL/TLS certificate validation for all scrape operations
 
 ### Rate Limiting and Batch Processing
 

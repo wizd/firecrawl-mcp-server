@@ -925,6 +925,9 @@ const CONFIG = {
     criticalThreshold:
       Number(process.env.FIRECRAWL_CREDIT_CRITICAL_THRESHOLD) || 100,
   },
+  scrape: {
+    skipTlsVerification: process.env.FIRECRAWL_SKIP_TLS_VERIFICATION === 'true',
+  },
 };
 
 // Add utility function for delay
@@ -1018,6 +1021,12 @@ server.setRequestHandler(
             throw new Error('Invalid arguments for firecrawl_scrape');
           }
           const { url, ...options } = args as any;
+
+          // Apply default skipTlsVerification if not explicitly provided
+          if (options.skipTlsVerification === undefined) {
+            options.skipTlsVerification = CONFIG.scrape.skipTlsVerification;
+          }
+
           const cleaned = removeEmptyTopLevel(options);
           try {
             const scrapeStartTime = Date.now();
