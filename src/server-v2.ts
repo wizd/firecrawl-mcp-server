@@ -868,6 +868,14 @@ export function createV2Server() {
     },
   };
 
+  // Debug: Log configuration and environment on server creation (V2)
+  safeLog('debug', 'V2 CONFIG initialized: ' + JSON.stringify(CONFIG, null, 2));
+  safeLog('debug', 'V2 Environment variables:');
+  safeLog('debug', '  FIRECRAWL_API_URL: ' + process.env.FIRECRAWL_API_URL);
+  safeLog('debug', '  FIRECRAWL_API_KEY: ' + (process.env.FIRECRAWL_API_KEY ? '[SET]' : '[NOT SET]'));
+  safeLog('debug', '  FIRECRAWL_SKIP_TLS_VERIFICATION: ' + process.env.FIRECRAWL_SKIP_TLS_VERIFICATION);
+  safeLog('debug', '  CLOUD_SERVICE: ' + process.env.CLOUD_SERVICE);
+
   // Add utility function for delay
   function delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -932,6 +940,11 @@ export function createV2Server() {
         throw new Error('No API key provided');
       }
 
+      // Debug: Log client initialization
+      safeLog('debug', 'V2 Initializing FirecrawlApp with:');
+      safeLog('debug', '  apiKey: ' + (apiKey ? '[SET]' : '[NOT SET]'));
+      safeLog('debug', '  apiUrl: ' + (FIRECRAWL_API_URL || 'default'));
+
       const client = new FirecrawlApp({
         apiKey,
         ...(FIRECRAWL_API_URL ? { apiUrl: FIRECRAWL_API_URL } : {}),
@@ -948,19 +961,32 @@ export function createV2Server() {
 
       switch (name) {
         case 'firecrawl_scrape': {
+          safeLog('debug', 'V2 firecrawl_scrape called with args: ' + JSON.stringify(args, null, 2));
+
           if (!isScrapeOptions(args)) {
+            safeLog('debug', 'V2 isScrapeOptions validation failed for args: ' + JSON.stringify(args, null, 2));
             throw new Error('Invalid arguments for firecrawl_scrape');
           }
           const { url, ...options } = args as any;
+          safeLog('debug', 'V2 Extracted url: ' + url);
+          safeLog('debug', 'V2 Extracted options: ' + JSON.stringify(options, null, 2));
 
           // Apply default skipTlsVerification if not explicitly provided
+          safeLog('debug', 'V2 options.skipTlsVerification before default application: ' + options.skipTlsVerification);
+          safeLog('debug', 'V2 CONFIG.scrape.skipTlsVerification: ' + CONFIG.scrape.skipTlsVerification);
+
           if (options.skipTlsVerification === undefined) {
             options.skipTlsVerification = CONFIG.scrape.skipTlsVerification;
+            safeLog('debug', 'V2 Applied default skipTlsVerification: ' + options.skipTlsVerification);
           }
 
           const cleaned = removeEmptyTopLevel(options);
+          safeLog('debug', 'V2 Cleaned options: ' + JSON.stringify(cleaned, null, 2));
           try {
             const scrapeStartTime = Date.now();
+            safeLog('debug', 'V2 About to call client.scrape with:');
+            safeLog('debug', '  url: ' + url);
+            safeLog('debug', '  params: ' + JSON.stringify({ ...cleaned, origin: 'mcp-server' }, null, 2));
             safeLog(
               'info',
               `Starting scrape for URL: ${url} with options: ${JSON.stringify(options)}`
@@ -969,6 +995,7 @@ export function createV2Server() {
               ...cleaned,
               origin: 'mcp-server',
             } as any);
+            safeLog('debug', 'V2 client.scrape response received: ' + JSON.stringify(response, null, 2));
             // Log performance metrics
             safeLog(
               'info',
@@ -1043,6 +1070,17 @@ export function createV2Server() {
               isError: false,
             };
           } catch (error) {
+            safeLog('debug', 'V2 firecrawl_scrape caught error:');
+            safeLog('debug', '  Error type: ' + typeof error);
+            safeLog('debug', '  Error instanceof Error: ' + (error instanceof Error));
+            safeLog('debug', '  Error message: ' + (error instanceof Error ? error.message : String(error)));
+            try {
+              safeLog('debug', '  Full error object: ' + JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+            } catch (_) {
+              // ignore stringify failures
+            }
+            safeLog('debug', '  Error stack: ' + (error instanceof Error ? error.stack : 'No stack trace'));
+
             const errorMessage =
               error instanceof Error ? error.message : String(error);
             return {
@@ -1266,6 +1304,20 @@ ${
           };
       }
     } catch (error) {
+      // Extra debug details before error log
+      safeLog('debug', 'V2 Global error handler caught error:');
+      safeLog('debug', '  Tool: ' + request.params.name);
+      try {
+        safeLog('debug', '  Arguments: ' + JSON.stringify(request.params.arguments, null, 2));
+      } catch (_) {}
+      safeLog('debug', '  Error type: ' + typeof error);
+      safeLog('debug', '  Error instanceof Error: ' + (error instanceof Error));
+      safeLog('debug', '  Error message: ' + (error instanceof Error ? error.message : String(error)));
+      try {
+        safeLog('debug', '  Full error object: ' + JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+      } catch (_) {}
+      safeLog('debug', '  Error stack: ' + (error instanceof Error ? error.stack : 'No stack trace'));
+
       // Log detailed error information
       safeLog('error', {
         message: `Request failed: ${
