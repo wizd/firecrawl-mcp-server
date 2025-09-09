@@ -931,12 +931,12 @@ const CONFIG = {
 };
 
 // Debug: Log configuration on startup
-console.error('[DEBUG] CONFIG initialized:', JSON.stringify(CONFIG, null, 2));
-console.error('[DEBUG] Environment variables:');
-console.error('  FIRECRAWL_API_URL:', process.env.FIRECRAWL_API_URL);
-console.error('  FIRECRAWL_API_KEY:', process.env.FIRECRAWL_API_KEY ? '[SET]' : '[NOT SET]');
-console.error('  FIRECRAWL_SKIP_TLS_VERIFICATION:', process.env.FIRECRAWL_SKIP_TLS_VERIFICATION);
-console.error('  CLOUD_SERVICE:', process.env.CLOUD_SERVICE);
+safeLog('debug', 'CONFIG initialized: ' + JSON.stringify(CONFIG, null, 2));
+safeLog('debug', 'Environment variables:');
+safeLog('debug', '  FIRECRAWL_API_URL: ' + process.env.FIRECRAWL_API_URL);
+safeLog('debug', '  FIRECRAWL_API_KEY: ' + (process.env.FIRECRAWL_API_KEY ? '[SET]' : '[NOT SET]'));
+safeLog('debug', '  FIRECRAWL_SKIP_TLS_VERIFICATION: ' + process.env.FIRECRAWL_SKIP_TLS_VERIFICATION);
+safeLog('debug', '  CLOUD_SERVICE: ' + process.env.CLOUD_SERVICE);
 
 // Add utility function for delay
 function delay(ms: number): Promise<void> {
@@ -1010,9 +1010,9 @@ server.setRequestHandler(
       }
 
       // Debug: Log client initialization
-      console.error('[DEBUG] Initializing FirecrawlApp with:');
-      console.error('  apiKey:', apiKey ? '[SET]' : '[NOT SET]');
-      console.error('  apiUrl:', FIRECRAWL_API_URL || 'default');
+      safeLog('debug', 'Initializing FirecrawlApp with:');
+      safeLog('debug', '  apiKey: ' + (apiKey ? '[SET]' : '[NOT SET]'));
+      safeLog('debug', '  apiUrl: ' + (FIRECRAWL_API_URL || 'default'));
 
       const client = new FirecrawlApp({
         apiKey,
@@ -1030,34 +1030,34 @@ server.setRequestHandler(
 
       switch (name) {
         case 'firecrawl_scrape': {
-          console.error('[DEBUG] firecrawl_scrape called with args:', JSON.stringify(args, null, 2));
+          safeLog('debug', 'firecrawl_scrape called with args: ' + JSON.stringify(args, null, 2));
 
           if (!isScrapeOptions(args)) {
-            console.error('[DEBUG] isScrapeOptions validation failed for args:', JSON.stringify(args, null, 2));
+            safeLog('debug', 'isScrapeOptions validation failed for args: ' + JSON.stringify(args, null, 2));
             throw new Error('Invalid arguments for firecrawl_scrape');
           }
 
           const { url, ...options } = args as any;
-          console.error('[DEBUG] Extracted url:', url);
-          console.error('[DEBUG] Extracted options:', JSON.stringify(options, null, 2));
+          safeLog('debug', 'Extracted url: ' + url);
+          safeLog('debug', 'Extracted options: ' + JSON.stringify(options, null, 2));
 
           // Apply default skipTlsVerification if not explicitly provided
-          console.error('[DEBUG] options.skipTlsVerification before default application:', options.skipTlsVerification);
-          console.error('[DEBUG] CONFIG.scrape.skipTlsVerification:', CONFIG.scrape.skipTlsVerification);
+          safeLog('debug', 'options.skipTlsVerification before default application: ' + options.skipTlsVerification);
+          safeLog('debug', 'CONFIG.scrape.skipTlsVerification: ' + CONFIG.scrape.skipTlsVerification);
 
           if (options.skipTlsVerification === undefined) {
             options.skipTlsVerification = CONFIG.scrape.skipTlsVerification;
-            console.error('[DEBUG] Applied default skipTlsVerification:', options.skipTlsVerification);
+            safeLog('debug', 'Applied default skipTlsVerification: ' + options.skipTlsVerification);
           }
 
           const cleaned = removeEmptyTopLevel(options);
-          console.error('[DEBUG] Cleaned options:', JSON.stringify(cleaned, null, 2));
+          safeLog('debug', 'Cleaned options: ' + JSON.stringify(cleaned, null, 2));
 
           try {
             const scrapeStartTime = Date.now();
-            console.error('[DEBUG] About to call client.scrape with:');
-            console.error('  url:', url);
-            console.error('  params:', JSON.stringify({ ...cleaned, origin: 'mcp-server' }, null, 2));
+            safeLog('debug', 'About to call client.scrape with:');
+            safeLog('debug', '  url: ' + url);
+            safeLog('debug', '  params: ' + JSON.stringify({ ...cleaned, origin: 'mcp-server' }, null, 2));
 
             safeLog(
               'info',
@@ -1069,7 +1069,7 @@ server.setRequestHandler(
               origin: 'mcp-server',
             } as any);
 
-            console.error('[DEBUG] client.scrape response received:', JSON.stringify(response, null, 2));
+            safeLog('debug', 'client.scrape response received: ' + JSON.stringify(response, null, 2));
             // Log performance metrics
             safeLog(
               'info',
@@ -1144,12 +1144,12 @@ server.setRequestHandler(
               isError: false,
             };
           } catch (error) {
-            console.error('[DEBUG] firecrawl_scrape caught error:');
-            console.error('  Error type:', typeof error);
-            console.error('  Error instanceof Error:', error instanceof Error);
-            console.error('  Error message:', error instanceof Error ? error.message : String(error));
-            console.error('  Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
-            console.error('  Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+            safeLog('debug', 'firecrawl_scrape caught error:');
+            safeLog('debug', '  Error type: ' + typeof error);
+            safeLog('debug', '  Error instanceof Error: ' + (error instanceof Error));
+            safeLog('debug', '  Error message: ' + (error instanceof Error ? error.message : String(error)));
+            safeLog('debug', '  Full error object: ' + JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+            safeLog('debug', '  Error stack: ' + (error instanceof Error ? error.stack : 'No stack trace'));
 
             const errorMessage =
               error instanceof Error ? error.message : String(error);
@@ -1374,14 +1374,14 @@ ${
           };
       }
     } catch (error) {
-      console.error('[DEBUG] Global error handler caught error:');
-      console.error('  Tool:', request.params.name);
-      console.error('  Arguments:', JSON.stringify(request.params.arguments, null, 2));
-      console.error('  Error type:', typeof error);
-      console.error('  Error instanceof Error:', error instanceof Error);
-      console.error('  Error message:', error instanceof Error ? error.message : String(error));
-      console.error('  Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
-      console.error('  Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      safeLog('debug', 'Global error handler caught error:');
+      safeLog('debug', '  Tool: ' + request.params.name);
+      safeLog('debug', '  Arguments: ' + JSON.stringify(request.params.arguments, null, 2));
+      safeLog('debug', '  Error type: ' + typeof error);
+      safeLog('debug', '  Error instanceof Error: ' + (error instanceof Error));
+      safeLog('debug', '  Error message: ' + (error instanceof Error ? error.message : String(error)));
+      safeLog('debug', '  Full error object: ' + JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+      safeLog('debug', '  Error stack: ' + (error instanceof Error ? error.stack : 'No stack trace'));
 
       // Log detailed error information
       safeLog('error', {
